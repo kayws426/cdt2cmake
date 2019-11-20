@@ -12,6 +12,6 @@ jobs:
     - name: configure
       run: cmake .
     - name: install-dependencies
-      run: apt-get install libtinyxml-dev libtinyxml2-dev
+      run: sudo apt-get update && sudo apt-get install libtinyxml-dev libtinyxml2-dev
     - name: make
       run: make VERBOSE=1
