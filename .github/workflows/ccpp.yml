@@ -11,5 +11,7 @@ jobs:
     - uses: actions/checkout@v1
     - name: configure
       run: cmake .
+    - name: install-dependencies
+      run: apt-get install libtinyxml-dev libtinyxml2-dev
     - name: make
       run: make VERBOSE=1
