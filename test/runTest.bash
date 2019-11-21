@@ -121,4 +121,4 @@ else
 fi
 popd &>/dev/null
 
-exit retVal
+exit $retVal
