@@ -60,6 +60,7 @@ struct configuration_t
 
 	std::vector<build_folder> build_folders;
 
+
 	struct build_file
 	{
 		std::string file;
@@ -69,6 +70,13 @@ struct configuration_t
 	};
 
 	std::vector<build_file> build_files;
+
+	struct excludes
+	{
+		std::string sourcePath;
+	};
+
+	std::vector<excludes> exclude_entries;
 };
 
 std::string to_string(configuration_t::Type t);

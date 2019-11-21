@@ -11,6 +11,7 @@
 #include <iterator>
 #include "tixml_iterator.h"
 
+
 template <typename ex = std::runtime_error>
 void throw_if(bool cond, const std::string& what)
 {
@@ -188,14 +189,24 @@ configuration_t project::configuration(const std::string& cconfiguration_id)
 			auto toolChain = build_instr->FirstChildElement("toolChain");
 			throw_if(!toolChain, "Unable to find toolChain node");
 
-			auto extract_option_list = [](TiXmlElement* option, std::vector<std::string>& list)
+			auto filterStrings = [](std::string& mainString, const std::string& toRemove)
+			{
+			  size_t POS = std::string::npos;
+			  while ((POS = mainString.find(toRemove))!= std::string::npos)
+			    {
+			      mainString.erase(POS, toRemove.length());
+			    }
+			};
+
+			auto extract_option_list = [&filterStrings](TiXmlElement* option, std::vector<std::string>& list)
 			{
 				for(auto listOptionValue : elements_named(option, "listOptionValue"))
 				{
 					if(!listOptionValue->Attribute("value"))
 						continue;
 
-					const std::string value = listOptionValue->Attribute("value");
+					std::string value = listOptionValue->Attribute("value");
+					filterStrings(value, "\"");
 					list.push_back(value);
 				}
 			};
@@ -210,9 +221,13 @@ configuration_t project::configuration(const std::string& cconfiguration_id)
 //					fprintf(stderr, "option: %s\n", superClass.c_str());
 
 					if(superClass.find("compiler.option.include.paths") != std::string::npos)
+					  {
 						extract_option_list(option, compiler.includes);
+					  }
 					else if(superClass.find("compiler.option.other.other") != std::string::npos)
+					  {
 						option->QueryStringAttribute("value", &compiler.options);
+					  }
 				}
 			};
 
@@ -283,6 +298,30 @@ configuration_t project::configuration(const std::string& cconfiguration_id)
 					}
 				}
 			}
+		}
+		else if(build_instr->ValueStr() == "sourceEntries")
+		{
+		    for(auto entry : elements_named(build_instr,"entry"))
+		      {
+			std::string pipeSeparatedList = "";
+			int queryResult = entry->QueryStringAttribute("excluding", &pipeSeparatedList);
+			if(queryResult == 0)
+			{
+			    std::stringstream stream(pipeSeparatedList);
+			    std::string item;
+
+			    while(getline(stream, item, '|'))
+			    {
+				configuration_t::excludes excluse_me;
+				excluse_me.sourcePath = item;
+				conf.exclude_entries.push_back(excluse_me);
+			    }
+			}
+			else
+			  {
+			     std::cerr << "Unknown element in source Entries" << std::endl;
+			  }
+		      }
 		}
 		else
 		{
