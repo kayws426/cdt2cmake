@@ -121,4 +121,22 @@ std::ostream& operator<<(std::ostream& os, const configuration_t::build_folder::
 	return os;
 }
 
+//std::ostream& operator<<(std::ostream& os, const configuration_t::environment_variables& l)
+//{
+//	os << "{\n";
+
+//	os << "      flags: " << l.flags << "\n";
+
+//	os << "      libs: ";
+//	std::copy(l.libs.begin(), l.libs.end(), std::ostream_iterator<std::string>(os, ", "));
+//	os << "\n";
+
+//	os << "      lib_paths: ";
+//	std::copy(l.lib_paths.begin(), l.lib_paths.end(), std::ostream_iterator<std::string>(os, ", "));
+//	os << "\n";
+
+//	os << "   }\n";
+//	return os;
+//}
+
 }
