@@ -10,6 +10,8 @@
 #include <sstream>
 #include <iterator>
 #include "tixml_iterator.h"
+#include <iostream>
+#include <fstream>
 
 
 template <typename ex = std::runtime_error>
@@ -30,6 +32,19 @@ project::project(const std::string& project_base)
 
 	throw_if(!project_doc.LoadFile(project_file), "Unable to parse file " + project_file);
 	throw_if(!cproject_doc.LoadFile(cproject_file), "Unable to parse file " + cproject_file);
+
+	/* read in the prefs file for Eclipse-wide environment variables*/
+	const std::string prefs_file = project_path + ".settings/org.eclipse.cdt.core.prefs";
+	std::ifstream ifs(prefs_file.c_str());
+	if(ifs.is_open())
+	  {
+	    std::string line;
+	    while (std::getline(ifs,line))
+	      {
+		project_vars.push_back(line);
+	      }
+	    ifs.close();
+	  }
 
 	auto project_root = project_doc.RootElement();
 	throw_if(project_root->ValueStr() != "projectDescription", "Unrecognised root node in" + project_file);
@@ -211,7 +226,7 @@ configuration_t project::configuration(const std::string& cconfiguration_id)
 				}
 			};
 
-			auto extract_compiler_options = [&extract_option_list](TiXmlElement* tool, configuration_t::build_folder::compiler_t& compiler)
+			auto extract_compiler_options = [&filterStrings, &extract_option_list](TiXmlElement* tool, configuration_t::build_folder::compiler_t& compiler)
 			{
 				for(auto option : elements_named(tool, "option"))
 				{
@@ -227,6 +242,7 @@ configuration_t project::configuration(const std::string& cconfiguration_id)
 					else if(superClass.find("compiler.option.other.other") != std::string::npos)
 					  {
 						option->QueryStringAttribute("value", &compiler.options);
+						filterStrings(compiler.options, "\"");
 					  }
 				}
 			};
@@ -328,6 +344,23 @@ configuration_t project::configuration(const std::string& cconfiguration_id)
 			throw std::runtime_error("Unknown build node: " + build_instr->ValueStr());
 		}
 	}
+	for ( std::string& propsLines : project_vars)
+	  {
+	    size_t foundPROJ = propsLines.find(cconfiguration_id);
+	    if (foundPROJ != std::string::npos)
+	      {
+		std::string searchVal = "/value=";
+		size_t foundVAL = propsLines.find(searchVal);
+		if (foundVAL != std::string::npos)
+		  {
+			size_t offset = foundPROJ + cconfiguration_id.length() + 1;
+			configuration_t::environment_variables varies;
+			varies.key = propsLines.substr(offset, foundVAL - offset);
+			varies.value = propsLines.substr(foundVAL + searchVal.length());
+			conf.env_values.push_back(varies);
+		  }
+	      }
+	  }
 
 	return conf;
 }

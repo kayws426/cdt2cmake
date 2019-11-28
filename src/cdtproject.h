@@ -30,6 +30,7 @@ private:
 
 	TiXmlDocument project_doc;
 	TiXmlDocument cproject_doc;
+	std::vector<std::string> project_vars;
 public:
 	project(const std::string& project_base);
 

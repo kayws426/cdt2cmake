@@ -77,6 +77,13 @@ struct configuration_t
 	};
 
 	std::vector<excludes> exclude_entries;
+
+	struct environment_variables
+	{
+	  std::string key;
+	  std::string value;
+	};
+	std::vector<environment_variables> env_values;
 };
 
 std::string to_string(configuration_t::Type t);

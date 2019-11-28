@@ -254,7 +254,7 @@ void generate(cdt::project& cdtproject, bool write_files)
 	}
 	std::ostream master(buf);
 	
-	master << "cmake_minimum_required (VERSION 2.8)\n";
+	master << "cmake_minimum_required (VERSION 3.5)\n";
 	master << "project (" << project_name << ")\n";
 	master << "\n";
 
@@ -262,6 +262,10 @@ void generate(cdt::project& cdtproject, bool write_files)
 	{
 		auto& c = ac.second;
 		
+		for(cdt::configuration_t::environment_variables env : c.env_values)
+		  {
+		    master << "set ( "  << env.key << " \"" << env.value << "\" )\n";
+		  }
 		switch(c.type)
 		{
 			case cdt::configuration_t::Type::Executable:
