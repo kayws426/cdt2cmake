@@ -14,24 +14,6 @@
 namespace cmake
 {
 
-/* TODO simple cmake list file structure for building valid files
-
-std::ostringstream s;
-s << comment("This is a cmake comment");
-s << comment("it supports\nmultiple\nlines");
-s << "\n";
-s << command("cmake_minimum_required", arg("VERSION"), arg(2.8));
-s << command("project", var("name"));
-
-#This is a cmake comment
-#it supports
-#multiple
-#lines
-
-cmake_minimum_required (VERSION 2.8)
-project(${name})
- */
-
 struct comment_t
 {
     std::vector<std::string> cmt;

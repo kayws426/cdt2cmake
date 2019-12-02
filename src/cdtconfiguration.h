@@ -18,7 +18,6 @@ struct configuration_t
 {
     std::string name;
     std::string artifact;
-
     std::string prebuild;
     std::string postbuild;
 
@@ -60,7 +59,6 @@ struct configuration_t
 
     std::vector<build_folder> build_folders;
 
-
     struct build_file
     {
         std::string file;
@@ -83,13 +81,12 @@ struct configuration_t
         std::string key;
         std::string value;
     };
+
     std::vector<environment_variables> env_values;
 };
 
 std::string to_string(configuration_t::Type t);
-
 configuration_t::Type resolve_artifact_type(const std::string& artifact_type);
-
 std::ostream& operator<<(std::ostream& os, const configuration_t& conf);
 std::ostream& operator<<(std::ostream& os, const configuration_t::build_folder& bf);
 std::ostream& operator<<(std::ostream& os, const configuration_t::build_file& bf);

@@ -185,6 +185,7 @@ configuration_t project::configuration(const std::string& cconfiguration_id)
 	configuration->QueryStringAttribute("artifactName", &conf.artifact);
 	if(conf.artifact == "${ProjName}")
 		conf.artifact = name();
+
 	configuration->QueryStringAttribute("prebuildStep", &conf.prebuild);
 	configuration->QueryStringAttribute("postbuildStep", &conf.postbuild);
 
@@ -233,8 +234,6 @@ configuration_t project::configuration(const std::string& cconfiguration_id)
 					std::string superClass;
 					option->QueryStringAttribute("superClass", &superClass);
 
-//					fprintf(stderr, "option: %s\n", superClass.c_str());
-
 					if(superClass.find("compiler.option.include.paths") != std::string::npos)
 					  {
 						extract_option_list(option, compiler.includes);
@@ -253,8 +252,6 @@ configuration_t project::configuration(const std::string& cconfiguration_id)
 				{
 					std::string superClass;
 					option->QueryStringAttribute("superClass", &superClass);
-
-//					fprintf(stderr, "option: %s\n", superClass.c_str());
 
 					if(superClass.find("link.option.libs") != std::string::npos)
 						extract_option_list(option, linker.libs);

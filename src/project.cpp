@@ -86,6 +86,7 @@ void merge(const cdt::configuration_t::build_folder::compiler_t& source, cdt::co
 			merged.options += " " + source.options;
 	}
 }
+
 void merge(const cdt::configuration_t::build_folder::linker_t& source, cdt::configuration_t::build_folder::linker_t& merged)
 {
 	for(auto& lib : source.libs)
@@ -431,8 +432,8 @@ void generate(cdt::project& cdtproject, bool write_files)
 			}
 			else
 			{
-				master << "add_subdirectory(" << bf.path << ")\n\n";
 				// create subdir file.
+				master << "add_subdirectory(" << bf.path << ")\n\n";
 				// subdirectory
 			}
 		}

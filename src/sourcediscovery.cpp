@@ -32,6 +32,7 @@ bool is_c_source_filename(const std::string& filename)
 	auto file_type = filename.substr(pos);
 	return std::find(begin(c_types), end(c_types), file_type) != end(c_types);
 }
+
 bool is_cxx_source_filename(const std::string& filename)
 {
 	static const auto c_types = {".C", "c++", ".cc", ".cpp", ".cxx"};

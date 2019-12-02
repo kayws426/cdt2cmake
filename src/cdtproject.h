@@ -46,9 +46,7 @@ public:
     TiXmlElement* settings();
     std::vector<std::string> cconfigurations();
     TiXmlElement* cconfiguration(const std::string& id);
-
     configuration_t configuration(const std::string& cconfiguration_id);
-
     TiXmlElement* cdtBuildSystem_configuration(const std::string& cconfiguration_id);
 };
 
