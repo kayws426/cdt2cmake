@@ -59,7 +59,7 @@ void find_sources(const std::string& base_path, const std::string& path, const s
 			std::string name = dir->d_name;
 			if(dir->d_type == DT_DIR)
 			{
-				if(name == "." || name == "..")
+				if(name == "." || name == ".." || name == "CMakeFiles")
 					continue;
 
 				auto rel_path = name;

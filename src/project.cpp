@@ -254,8 +254,8 @@ void generate(cdt::project& cdtproject, bool write_files)
 	}
 	std::ostream master(buf);
 	
-	master << "cmake_minimum_required (VERSION 3.5)\n";
-	master << "project (" << project_name << ")\n";
+	master << "cmake_minimum_required (VERSION 3.5)\n\n";
+	master << "project (" << project_name << ")\n\n";
 	master << "\n";
 
 	for(auto& ac : artifact_configurations)
@@ -264,7 +264,7 @@ void generate(cdt::project& cdtproject, bool write_files)
 		
 		for(cdt::configuration_t::environment_variables env : c.env_values)
 		  {
-		    master << "set ( "  << env.key << " \"" << env.value << "\" )\n";
+		    master << "set ( "  << env.key << " \"" << env.value << "\" )\n\n";
 		  }
 		switch(c.type)
 		{
@@ -282,11 +282,13 @@ void generate(cdt::project& cdtproject, bool write_files)
 		{
 			for(const auto& source : source_folder.second)
 			{
-				master << (source_folder.second.size() > 3 ? "\n   " : " ") << (source_folder.first.empty() ? std::string{} : source_folder.first + "/") << source;
+				master
+				    << "\n\t"
+				    << (source_folder.first.empty() ? std::string{} : source_folder.first + "/")
+				    << source;
 			}
-			master << "\n";
 		}
-		master << ")\n";
+		master << ")\n\n";
 		
 		if(!c.prebuild.empty() || !c.postbuild.empty())
 		{
@@ -310,12 +312,12 @@ void generate(cdt::project& cdtproject, bool write_files)
 						if(lang_cxx)
 						{
 							for(auto& inc : bf.cpp.compiler.includes)
-								master << (bf.cpp.compiler.includes.size() > 3 ? "\n   " : " ") << '"' << inc << '"';
+								master << (bf.cpp.compiler.includes.size() > 3 ? "\n\t" : " ") << '"' << inc << '"';
 						}
 						if(lang_c)
 						{
 							for(auto& inc : bf.c.compiler.includes)
-								master << (bf.c.compiler.includes.size() > 3 ? "\n   " : " ") << '"' << inc << '"';
+								master << (bf.c.compiler.includes.size() > 3 ? "\n\t" : " ") << '"' << inc << '"';
 						}
 						master << ")\n\n";
 					}
@@ -369,22 +371,24 @@ void generate(cdt::project& cdtproject, bool write_files)
 						master << "set_target_properties(" << c.artifact << " PROPERTIES LINK_FLAGS \"";
 						for(auto& o : flags)
 							master << o << ' ';
-						master << "\")\n";
+						master << "\")\n\n";
 					}
 				
 					if(!bf.cpp.linker.lib_paths.empty())
 					{
 						master << "link_directories (";
 						for(auto& path : bf.cpp.linker.lib_paths)
-							master << (bf.cpp.linker.lib_paths.size() > 3 ? "\n   " : " ") << path;
-						master << ")\n";
+							master
+							    << (bf.cpp.linker.lib_paths.size() > 3 ? "\n\t" : " ")
+							    << path;
+						master << ")\n\n";
 					}
 
 					if(!bf.cpp.linker.libs.empty())
 					{
 						master << "target_link_libraries (" << c.artifact;
 						for(auto& lib : bf.cpp.linker.libs)
-							master << (bf.cpp.linker.libs.size() > 3 ? "\n   " : " ") << lib;
+							master << (bf.cpp.linker.libs.size() > 3 ? "\n\t" : " ") << lib;
 						master << ")\n\n";
 					}
 				}
@@ -405,29 +409,29 @@ void generate(cdt::project& cdtproject, bool write_files)
 						master << "set_target_properties(" << c.artifact << " PROPERTIES LINK_FLAGS \"";
 						for(auto& o : flags)
 							master << o << ' ';
-						master << "\")\n";
+						master << "\")\n\n";
 					}
 				
 					if(!bf.c.linker.lib_paths.empty())
 					{
 						master << "link_directories (";
 						for(auto& path : bf.c.linker.lib_paths)
-							master << (bf.c.linker.lib_paths.size() > 3 ? "\n   " : " ") << path;
-						master << ")\n";
+							master << (bf.c.linker.lib_paths.size() > 3 ? "\n\t" : " ") << path;
+						master << ")\n\n";
 					}
 
 					if(!bf.c.linker.libs.empty())
 					{
 						master << "target_link_libraries (" << c.artifact;
 						for(auto& lib : bf.c.linker.libs)
-							master << (bf.c.linker.libs.size() > 3 ? "\n   " : " ") << lib;
+							master << (bf.c.linker.libs.size() > 3 ? "\n\t" : " ") << lib;
 						master << ")\n\n";
 					}
 				}
 			}
 			else
 			{
-				master << "add_subdirectory(" << bf.path << ")\n";
+				master << "add_subdirectory(" << bf.path << ")\n\n";
 				// create subdir file.
 				// subdirectory
 			}
