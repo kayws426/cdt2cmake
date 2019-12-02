@@ -16,74 +16,74 @@ namespace cdt
 
 struct configuration_t
 {
-	std::string name;
-	std::string artifact;
+    std::string name;
+    std::string artifact;
 
-	std::string prebuild;
-	std::string postbuild;
+    std::string prebuild;
+    std::string postbuild;
 
-	enum class Type
-	{
-		Executable,
-		StaticLibrary,
-		SharedLibrary
-	} type;
+    enum class Type
+    {
+        Executable,
+        StaticLibrary,
+        SharedLibrary
+    } type;
 
-	struct build_folder
-	{
-		std::string path;
+    struct build_folder
+    {
+        std::string path;
 
-		struct compiler_t
-		{
-			std::vector<std::string> includes;
-			std::string options;
-		};
-		struct linker_t
-		{
-			std::string flags;
-			std::vector<std::string> libs;
-			std::vector<std::string> lib_paths;
-		};
+        struct compiler_t
+        {
+            std::vector<std::string> includes;
+            std::string options;
+        };
+        struct linker_t
+        {
+            std::string flags;
+            std::vector<std::string> libs;
+            std::vector<std::string> lib_paths;
+        };
 
-		struct
-		{
-			compiler_t compiler;
-			linker_t linker;
-		} c;
+        struct
+        {
+            compiler_t compiler;
+            linker_t linker;
+        } c;
 
-		struct
-		{
-			compiler_t compiler;
-			linker_t linker;
-		} cpp;
-	};
+        struct
+        {
+            compiler_t compiler;
+            linker_t linker;
+        } cpp;
+    };
 
-	std::vector<build_folder> build_folders;
+    std::vector<build_folder> build_folders;
 
 
-	struct build_file
-	{
-		std::string file;
-		std::string command;
-		std::string inputs;
-		std::string outputs;
-	};
+    struct build_file
+    {
+        std::string file;
+        std::string command;
+        std::string inputs;
+        std::string outputs;
+    };
 
-	std::vector<build_file> build_files;
+    std::vector<build_file> build_files;
 
-	struct excludes
-	{
-		std::string sourcePath;
-	};
+    struct excludes
+    {
+        std::string sourcePath;
+    };
 
-	std::vector<excludes> exclude_entries;
+    std::vector<excludes> exclude_entries;
 
-	struct environment_variables
-	{
-	  std::string key;
-	  std::string value;
-	};
-	std::vector<environment_variables> env_values;
+    struct environment_variables
+    {
+        std::string key;
+        std::string value;
+    };
+    std::vector<environment_variables> env_values;
 };
 
 std::string to_string(configuration_t::Type t);
