@@ -26,30 +26,28 @@ namespace cdt
 class project
 {
 private:
-	std::string project_path;
+    std::string project_path;
 
-	TiXmlDocument project_doc;
-	TiXmlDocument cproject_doc;
-	std::vector<std::string> project_vars;
+    TiXmlDocument project_doc;
+    TiXmlDocument cproject_doc;
+    std::vector<std::string> project_vars;
 public:
-	project(const std::string& project_base);
+    project(const std::string& project_base);
 
-	std::string path() const;
+    std::string path() const;
 
-	// .project properties
-	std::string name();
-	std::string comment();
-	std::vector<std::string> referenced_projects();
-	std::vector<std::string> natures();
+    // .project properties
+    std::string name();
+    std::string comment();
+    std::vector<std::string> referenced_projects();
+    std::vector<std::string> natures();
 
-	// .cproject properties
-	TiXmlElement* settings();
-	std::vector<std::string> cconfigurations();
-	TiXmlElement* cconfiguration(const std::string& id);
-
-	configuration_t configuration(const std::string& cconfiguration_id);
-
-	TiXmlElement* cdtBuildSystem_configuration(const std::string& cconfiguration_id);
+    // .cproject properties
+    TiXmlElement* settings();
+    std::vector<std::string> cconfigurations();
+    TiXmlElement* cconfiguration(const std::string& id);
+    configuration_t configuration(const std::string& cconfiguration_id);
+    TiXmlElement* cdtBuildSystem_configuration(const std::string& cconfiguration_id);
 };
 
 }

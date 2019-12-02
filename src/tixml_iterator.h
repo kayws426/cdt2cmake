@@ -11,18 +11,18 @@
 
 struct element_iterator_adapter_t
 {
-	TiXmlElement* parent;
-	const char* element_name;
+    TiXmlElement* parent;
+    const char* element_name;
 
-	struct iterator
-	{
-		element_iterator_adapter_t& a;
-		TiXmlElement* node;
+    struct iterator
+    {
+        element_iterator_adapter_t& a;
+        TiXmlElement* node;
 
-		TiXmlElement* operator*();
-		iterator& operator++();
-		bool operator!=(const iterator& o) const;
-	};
+        TiXmlElement* operator*();
+        iterator& operator++();
+        bool operator!=(const iterator& o) const;
+    };
 };
 
 element_iterator_adapter_t::iterator begin(element_iterator_adapter_t& a);

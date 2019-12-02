@@ -17,8 +17,8 @@ bool is_cxx_source_filename(const std::string& filename);
 
 struct source_file
 {
-	std::string name;
-	std::string path;
+    std::string name;
+    std::string path;
 };
 
 std::vector<source_file> find_sources(const std::string& base_path, const std::function<bool(std::string)>& predicate = is_source_filename);

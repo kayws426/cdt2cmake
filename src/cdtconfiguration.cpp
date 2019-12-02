@@ -45,7 +45,6 @@ std::ostream& operator<<(std::ostream& os, const configuration_t& conf)
 	os << "{\n";
 	os << "name: '" << conf.name << "'\n";
 	os << "artifact: '" << conf.artifact << "'\n";
-
 	os << "prebuild: '" << conf.prebuild << "'\n";
 	os << "postbuild: '" << conf.postbuild << "'\n";
 
@@ -71,6 +70,7 @@ std::ostream& operator<<(std::ostream& os, const configuration_t& conf)
 	os << "}\n";
 	return os;
 }
+
 std::ostream& operator<<(std::ostream& os, const configuration_t::build_folder& bf)
 {
 	os << "folder: '" << bf.path << "' {\n";
@@ -81,6 +81,7 @@ std::ostream& operator<<(std::ostream& os, const configuration_t::build_folder& 
 	os << "}\n";
 	return os;
 }
+
 std::ostream& operator<<(std::ostream& os, const configuration_t::build_file& bf)
 {
 	os << "file: '" << bf.file << "' {\n";
@@ -90,33 +91,28 @@ std::ostream& operator<<(std::ostream& os, const configuration_t::build_file& bf
 	os << "}\n";
 	return os;
 }
+
 std::ostream& operator<<(std::ostream& os, const configuration_t::build_folder::compiler_t& c)
 {
 	os << "{\n";
-
 	os << "      includes: ";
 	std::copy(c.includes.begin(), c.includes.end(), std::ostream_iterator<std::string>(os, ", "));
 	os << "\n";
-
 	os << "      options: " << c.options << "\n";
-
 	os << "   }\n";
 	return os;
 }
+
 std::ostream& operator<<(std::ostream& os, const configuration_t::build_folder::linker_t& l)
 {
 	os << "{\n";
-
 	os << "      flags: " << l.flags << "\n";
-
 	os << "      libs: ";
 	std::copy(l.libs.begin(), l.libs.end(), std::ostream_iterator<std::string>(os, ", "));
 	os << "\n";
-
 	os << "      lib_paths: ";
 	std::copy(l.lib_paths.begin(), l.lib_paths.end(), std::ostream_iterator<std::string>(os, ", "));
 	os << "\n";
-
 	os << "   }\n";
 	return os;
 }
