@@ -267,8 +267,6 @@ configuration_t project::configuration(const std::string& cconfiguration_id)
 				std::string superClass;
 				tool->QueryStringAttribute("superClass", &superClass);
 
-//				fprintf(stderr, "tool: %s\n", superClass.c_str());
-
 				if(superClass.find("cpp.compiler") != std::string::npos)
 					extract_compiler_options(tool, bf.cpp.compiler);
 

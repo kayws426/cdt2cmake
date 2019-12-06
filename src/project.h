@@ -19,9 +19,7 @@ struct project;
 
 namespace cmake
 {
-
 void generate(cdt::project& cdtproject, bool write_files);
-
 }
 
 #endif /* PROJECT_H_ */
