@@ -184,6 +184,7 @@ void generate(cdt::project& cdtproject, bool write_files)
 	bool lang_c = has_c_sources(sources);
 	bool lang_cxx = has_cxx_sources(sources);
 	map<string, cdt::configuration_t> artifact_configurations;
+	std::vector<std::string> configuration_typeNames;
 
 	vector<string> confs = cdtproject.cconfigurations();
 	for(string& conf_name : confs)
@@ -192,9 +193,15 @@ void generate(cdt::project& cdtproject, bool write_files)
 		cdt::configuration_t curConfig = cdtproject.configuration(conf_name);
 		cdt::configuration_t& configToAdd = artifact_configurations[curConfig.artifact + to_string(curConfig.type)];
 
-		/* give the candidate config it's name and artifact type */
-//		configToAdd.name = curConfig.artifact + to_string(curConfig.type);
+		configuration_typeNames.push_back(curConfig.name);
+
+#ifdef USE_CONFIG_NAMES
+		cdt::configuration_t& configToAdd = artifact_configurations[curConfig.artifact + to_string(curConfig.name)];
 		configToAdd.name = curConfig.artifact + curConfig.name;
+#endif //USE_CONFIG_NAMES
+
+		/* give the candidate config it's name and artifact type */
+		configToAdd.name = curConfig.artifact + to_string(curConfig.type);
 		configToAdd.artifact = curConfig.artifact;
 
 		/* give the candidate config it's prebuild settings */
@@ -264,15 +271,114 @@ void generate(cdt::project& cdtproject, bool write_files)
 		}
 
 		/* give the candidate config it's environment settings */
-		for(cdt::configuration_t::environment_variables& envVar : curConfig.env_values)
+		for(cdt::configuration_t::environment_variables& envVarToMerge : curConfig.env_values)
 		{
+			cdt::configuration_t::environment_variables* mergedEnvVar = nullptr;
 
+			for(cdt::configuration_t::environment_variables& envVarToCheck: configToAdd.env_values)
+			{
+			    /* check if the merged config has the variable already */
+				if (envVarToMerge.key == envVarToCheck.key)
+				  {
+				    /* establish that there is indeed a key match between the configurations by assigning the pointer here */
+				    mergedEnvVar = &envVarToCheck;
+
+					/* either the envVar has the same value or it needs to have a generator if-switch */
+					if (envVarToMerge.value != mergedEnvVar->value)
+					  {
+						//todo, wrap everything else in generators if they aren't already.
+						size_t alreadyHasGenerators = mergedEnvVar->value.find("$<");
+						if(alreadyHasGenerators == string::npos)
+						{
+							if(configuration_typeNames.size() > 2)
+							{
+							    /* wrap existing value around an OR generator, easy */
+							    string prepender =  "$<$<OR:";
+							    string pre =  "$<CONFIG:";
+							    for (string prevConfig : configuration_typeNames)
+							      prepender = prepender + pre + prevConfig + ">,";
+
+							    mergedEnvVar->value = prepender.substr(0,prepender.length()-2) + ">:" + mergedEnvVar->value + ">";
+							}
+							else if (configuration_typeNames.size() == 2)
+							{
+							    /* single generator, easy */
+							    mergedEnvVar->value =  "$<$<CONFIG:" + configuration_typeNames[0] + ">" + mergedEnvVar->value + ">";
+							}
+							else
+							  {
+
+								throw std::runtime_error("somethings' up: ");
+							  }
+						}
+
+						size_t isInHereInAform = mergedEnvVar->value.find(envVarToMerge.value);
+						if(isInHereInAform == string::npos)
+						{
+							/* JFC this algorithm sucks, but this is the case where a brand-new, ORIGIONAL entry is needed. */
+							mergedEnvVar->value = mergedEnvVar->value + " $<$<CONFIG:" + curConfig.name + ">:" + envVarToMerge.value + ">";
+
+						}
+						else
+						{
+							/* what do we need to know?
+							 * 1. check what generators this match is in: by counting the post '>'s you have.
+							 * 2. if it's only in a single generator, we need to wrap an $<OR:...> around it
+							 * 	* to do this, you must find the $<$<CONFIG: and insert the $<OR:$<CONFIG:...>, and the config. postpend your extra '>'
+							 * 3. if it already has an $<OR:...> around it, there's seperate kind of logic for that.
+							 */
+
+							size_t howManyLayer = 0,  charToSee = isInHereInAform + envVarToMerge.value.size();
+							while(mergedEnvVar->value[charToSee++] == '>')
+							  howManyLayer++;
+
+							if (howManyLayer = 1)
+							  {
+							    string preTheValue = mergedEnvVar->value.substr(0, isInHereInAform);
+							    size_t whereTheGeneratorStarts = preTheValue.find_last_of("$<")-1;
+							    string z_beginning = mergedEnvVar->value.substr(0,whereTheGeneratorStarts) , z_middle = "$<OR:$<CONFIG:" + curConfig.name + ">," ,
+								z_end =  mergedEnvVar->value.substr(whereTheGeneratorStarts);
+
+							    size_t whereToAddIt = z_end.find(envVarToMerge.value)+envVarToMerge.value.size();
+							    z_end = z_end.substr(0,whereToAddIt) + ">" + z_end.substr(whereToAddIt);
+							    mergedEnvVar->value = z_beginning + z_middle + z_end;
+							  }
+							else if (howManyLayer == 2)
+							  {
+							    printf("sh**\n");
+
+							  }
+							else
+							  {
+								throw std::runtime_error("node too deep: " + envVarToMerge.value );
+							  }
+						}
+					  }
+					break;
+				  }
+			}
+
+			/* if the merged environment variable was created (meaning we found one) */
+			if (!mergedEnvVar)
+			  {
+			    configToAdd.env_values.push_back(envVarToMerge);
+			  }
 		}
 
 		/* evaluate the candidate config's IGNORE list */
-		for(cdt::configuration_t::excludes& envVar : curConfig.exclude_entries)
+		for(cdt::configuration_t::excludes& fileToExclude : curConfig.exclude_entries)
 		{
-
+			for (cdt::configuration_t::build_file& checked_file: configToAdd.build_files)
+			  {
+			    if(checked_file.file == fileToExclude.sourcePath)
+			      {
+				/* the problem is that multiple configurations will have this .file member altered */
+//				checked_file.file_backup = checked_file.file;
+				//TODO: figure out your generator logic.
+//				checked_file.file =  "$<$<NOT:$<CONFIG:" + curConfig.name + ">>:" checked_file.file + ">";
+			      }
+//			    else if ()
+			  }
 		}
 	}
 
@@ -299,7 +405,7 @@ void generate(cdt::project& cdtproject, bool write_files)
 
 		for(cdt::configuration_t::environment_variables env : currentConf.env_values)
 		{
-		    master << "set ( "  << env.key << " \"" << env.value << "\" )\n";
+		    master << "set ( " << env.key << " " << env.value << " )\n";
 		}
 
 		switch(currentConf.type)

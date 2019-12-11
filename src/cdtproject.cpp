@@ -339,18 +339,32 @@ configuration_t project::configuration(const std::string& cconfiguration_id)
 			throw std::runtime_error("Unknown build node: " + build_instr->ValueStr());
 		}
 	}
+
+	/* Add the project variables to the data structure */
+	conf.env_values.push_back( {"WorkspaceDirPath", "${CMAKE_CURRENT_SOURCE_DIR}"});
+	conf.env_values.push_back( {"ProjName", conf.artifact });
 	for ( std::string& propsLines : project_vars)
 	  {
 	    size_t foundPROJ = propsLines.find(cconfiguration_id);
 	    if (foundPROJ != std::string::npos)
 	      {
+		//TODO: change the CFG to CONFIG or whatever standard Cmake generators do.
 		std::string searchVal = "/value=";
 		size_t foundVAL = propsLines.find(searchVal);
 		if (foundVAL != std::string::npos)
 		  {
 			size_t offset = foundPROJ + cconfiguration_id.length() + 1;
 			configuration_t::environment_variables varies;
-			varies.key = propsLines.substr(offset, foundVAL - offset);
+			std::string keyVal = propsLines.substr(offset, foundVAL - offset);
+			size_t foundFluff = keyVal.find("/") ;
+			if ( foundFluff != std::string::npos)
+			  {
+				varies.key = keyVal.substr(foundFluff + 1, keyVal.length()+1);
+			  }
+			else
+			  {
+				varies.key = keyVal;
+			  }
 			varies.value = propsLines.substr(foundVAL + searchVal.length());
 			conf.env_values.push_back(varies);
 		  }

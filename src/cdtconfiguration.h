@@ -62,6 +62,7 @@ struct configuration_t
     struct build_file
     {
         std::string file;
+        std::vector<std::string> excluded_config;
         std::string command;
         std::string inputs;
         std::string outputs;
