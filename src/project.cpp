@@ -307,51 +307,51 @@ void generate(cdt::project& cdtproject, bool write_files)
 							}
 							else
 							  {
-
-								throw std::runtime_error("somethings' up: ");
+								throw std::runtime_error("somethings' up");
 							  }
 						}
 
 						size_t isInHereInAform = mergedEnvVar->value.find(envVarToMerge.value);
 						if(isInHereInAform == string::npos)
 						{
-							/* JFC this algorithm sucks, but this is the case where a brand-new, ORIGIONAL entry is needed. */
 							mergedEnvVar->value = mergedEnvVar->value + " $<$<CONFIG:" + curConfig.name + ">:" + envVarToMerge.value + ">";
 
 						}
 						else
 						{
-							/* what do we need to know?
-							 * 1. check what generators this match is in: by counting the post '>'s you have.
-							 * 2. if it's only in a single generator, we need to wrap an $<OR:...> around it
-							 * 	* to do this, you must find the $<$<CONFIG: and insert the $<OR:$<CONFIG:...>, and the config. postpend your extra '>'
-							 * 3. if it already has an $<OR:...> around it, there's seperate kind of logic for that.
+							/* Welcome to the environment merge mess! there are only 2 types of generators our existing variable may be in.
+							 *  ether:
+							 * 1. the variable is in a $<CONFIG:...> generator (meaning we need to encapuslate this into an $<$<OR:,:> generator)
+							 * 2. the variable is already in an $<$<OR:,:>  generator and we simply need to add another option here.
+							 * Deriving this is a matter of counting the '>' brackets before variable we found.
+							 * Once done, we go through the obtuse substring logic that the std library has actually made fairly usable.
 							 */
-
-							size_t howManyLayer = 0,  charToSee = isInHereInAform + envVarToMerge.value.size();
-							while(mergedEnvVar->value[charToSee++] == '>')
+							size_t howManyLayer = 0,  charToSee = isInHereInAform  - 2;
+							while(mergedEnvVar->value[charToSee--] == '>')
 							  howManyLayer++;
 
-							if (howManyLayer = 1)
-							  {
-							    string preTheValue = mergedEnvVar->value.substr(0, isInHereInAform);
+							string preTheValue = mergedEnvVar->value.substr(0, isInHereInAform);
+							if (howManyLayer == 1)
+							{
 							    size_t whereTheGeneratorStarts = preTheValue.find_last_of("$<")-1;
 							    string z_beginning = mergedEnvVar->value.substr(0,whereTheGeneratorStarts) , z_middle = "$<OR:$<CONFIG:" + curConfig.name + ">," ,
 								z_end =  mergedEnvVar->value.substr(whereTheGeneratorStarts);
 
-							    size_t whereToAddIt = z_end.find(envVarToMerge.value)+envVarToMerge.value.size();
-							    z_end = z_end.substr(0,whereToAddIt) + ">" + z_end.substr(whereToAddIt);
+							    size_t whereToAddIt = z_end.find(envVarToMerge.value) -1;
+							    z_end = z_end.substr(0,whereToAddIt) + ">"  + z_end.substr(whereToAddIt);
 							    mergedEnvVar->value = z_beginning + z_middle + z_end;
-							  }
-							else if (howManyLayer == 2)
-							  {
-							    printf("sh**\n");
+							}
+							else if (howManyLayer > 1)
+							{
+							    string z_begin = mergedEnvVar->value.substr(0,isInHereInAform-2), z_middle = ",$<CONFIG:" + curConfig.name + ">",
+								z_end = mergedEnvVar->value.substr(isInHereInAform-2);
 
-							  }
+							    mergedEnvVar->value = z_begin + z_middle + z_end;
+							}
 							else
-							  {
-								throw std::runtime_error("node too deep: " + envVarToMerge.value );
-							  }
+							{
+								throw std::runtime_error("node has an invalid depth: " + envVarToMerge.value );
+							}
 						}
 					  }
 					break;
@@ -372,12 +372,9 @@ void generate(cdt::project& cdtproject, bool write_files)
 			  {
 			    if(checked_file.file == fileToExclude.sourcePath)
 			      {
-				/* the problem is that multiple configurations will have this .file member altered */
-//				checked_file.file_backup = checked_file.file;
 				//TODO: figure out your generator logic.
-//				checked_file.file =  "$<$<NOT:$<CONFIG:" + curConfig.name + ">>:" checked_file.file + ">";
+				printf("%s does not match %s in config %s\n", checked_file.file.c_str(), fileToExclude.sourcePath.c_str(), curConfig.name.c_str());
 			      }
-//			    else if ()
 			  }
 		}
 	}
