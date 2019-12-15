@@ -168,6 +168,77 @@ void merge(const cdt::configuration_t::build_file& source, cdt::configuration_t:
 	}
 }
 
+void generatorMerge(string& mergedEnvVar, const string& enVarToMerge, const vector<string>& prevConfigs)
+{
+	//wrap everything else in generators if they aren't already.
+	size_t alreadyHasGenerators = mergedEnvVar.find("$<");
+	if(alreadyHasGenerators == string::npos)
+	{
+		if(prevConfigs.size() > 2)
+		{
+		    /* wrap existing value around an OR generator, easy */
+		    string prepender =  "$<$<OR:";
+		    string pre =  "$<CONFIG:";
+		    for (string prevConfig : prevConfigs)
+		      prepender = prepender + pre + prevConfig + ">,";
+
+		    mergedEnvVar = prepender.substr(0,prepender.length()-2) + ">:" + mergedEnvVar + ">";
+		}
+		else if (prevConfigs.size() == 2)
+		{
+		    /* single generator, easy */
+		    mergedEnvVar =  "$<$<CONFIG:" + prevConfigs[0] + ">" + mergedEnvVar + ">";
+		}
+		else
+		  {
+			throw std::runtime_error("somethings' up");
+		  }
+	}
+
+	string newConfigName = prevConfigs[prevConfigs.size()-1];
+	size_t isInHereInAform = mergedEnvVar.find(enVarToMerge);
+	if(isInHereInAform == string::npos)
+	{
+		mergedEnvVar = mergedEnvVar + " $<$<CONFIG:" + newConfigName + ">:" + enVarToMerge + ">";
+	}
+	else
+	{
+		/* Welcome to the environment merge mess! there are only 2 types of generators our existing variable may be in.
+		 *  ether:
+		 * 1. the variable is in a $<CONFIG:...> generator (meaning we need to encapuslate this into an $<$<OR:,:> generator)
+		 * 2. the variable is already in an $<$<OR:,:>  generator and we simply need to add another option here.
+		 * Deriving this is a matter of counting the '>' brackets before variable we found.
+		 * Once done, we go through the obtuse substring logic that the std library has actually made fairly usable.
+		 */
+		size_t howManyLayer = 0,  charToSee = isInHereInAform  - 2;
+		while(mergedEnvVar[charToSee--] == '>')
+		  howManyLayer++;
+
+		string preTheValue = mergedEnvVar.substr(0, isInHereInAform);
+		if (howManyLayer == 1)
+		{
+		    size_t whereTheGeneratorStarts = preTheValue.find_last_of("$<")-1;
+		    string z_beginning = mergedEnvVar.substr(0,whereTheGeneratorStarts) , z_middle = "$<OR:$<CONFIG:" + newConfigName + ">," ,
+			z_end =  mergedEnvVar.substr(whereTheGeneratorStarts);
+
+		    size_t whereToAddIt = z_end.find(enVarToMerge) -1;
+		    z_end = z_end.substr(0,whereToAddIt) + ">"  + z_end.substr(whereToAddIt);
+		    mergedEnvVar = z_beginning + z_middle + z_end;
+		}
+		else if (howManyLayer > 1)
+		{
+		    string z_begin = mergedEnvVar.substr(0,isInHereInAform-2), z_middle = ",$<CONFIG:" + newConfigName + ">",
+			z_end = mergedEnvVar.substr(isInHereInAform-2);
+
+		    mergedEnvVar = z_begin + z_middle + z_end;
+		}
+		else
+		{
+			throw std::runtime_error("node has an invalid depth: " + enVarToMerge );
+		}
+	}
+}
+
 // one step, take cdt files and write cmakelists.
 void generate(cdt::project& cdtproject, bool write_files)
 {
@@ -175,16 +246,19 @@ void generate(cdt::project& cdtproject, bool write_files)
 	string project_path = cdtproject.path();
 
 	map<string, vector<string> > sources;
+	vector<source_file> source_files = find_sources(cdtproject.path(), is_source_filename);
+	vector<string> source_filpaths;
+	for(source_file& file : source_files)
 	{
-		vector<source_file> source_files = find_sources(cdtproject.path(), is_source_filename);
-		for(source_file& file : source_files)
-			sources[file.path].push_back(file.name);
+		sources[file.path].push_back(file.name);
+		source_filpaths.push_back("${WorkspaceDirPath}/" + file.path + "/" + file.name);
 	}
 
 	bool lang_c = has_c_sources(sources);
 	bool lang_cxx = has_cxx_sources(sources);
+
 	map<string, cdt::configuration_t> artifact_configurations;
-	std::vector<std::string> configuration_typeNames;
+	vector<string> configuration_typeNames;
 
 	vector<string> confs = cdtproject.cconfigurations();
 	for(string& conf_name : confs)
@@ -194,11 +268,6 @@ void generate(cdt::project& cdtproject, bool write_files)
 		cdt::configuration_t& configToAdd = artifact_configurations[curConfig.artifact + to_string(curConfig.type)];
 
 		configuration_typeNames.push_back(curConfig.name);
-
-#ifdef USE_CONFIG_NAMES
-		cdt::configuration_t& configToAdd = artifact_configurations[curConfig.artifact + to_string(curConfig.name)];
-		configToAdd.name = curConfig.artifact + curConfig.name;
-#endif //USE_CONFIG_NAMES
 
 		/* give the candidate config it's name and artifact type */
 		configToAdd.name = curConfig.artifact + to_string(curConfig.type);
@@ -285,76 +354,10 @@ void generate(cdt::project& cdtproject, bool write_files)
 
 					/* either the envVar has the same value or it needs to have a generator if-switch */
 					if (envVarToMerge.value != mergedEnvVar->value)
-					  {
-						//todo, wrap everything else in generators if they aren't already.
-						size_t alreadyHasGenerators = mergedEnvVar->value.find("$<");
-						if(alreadyHasGenerators == string::npos)
-						{
-							if(configuration_typeNames.size() > 2)
-							{
-							    /* wrap existing value around an OR generator, easy */
-							    string prepender =  "$<$<OR:";
-							    string pre =  "$<CONFIG:";
-							    for (string prevConfig : configuration_typeNames)
-							      prepender = prepender + pre + prevConfig + ">,";
-
-							    mergedEnvVar->value = prepender.substr(0,prepender.length()-2) + ">:" + mergedEnvVar->value + ">";
-							}
-							else if (configuration_typeNames.size() == 2)
-							{
-							    /* single generator, easy */
-							    mergedEnvVar->value =  "$<$<CONFIG:" + configuration_typeNames[0] + ">" + mergedEnvVar->value + ">";
-							}
-							else
-							  {
-								throw std::runtime_error("somethings' up");
-							  }
-						}
-
-						size_t isInHereInAform = mergedEnvVar->value.find(envVarToMerge.value);
-						if(isInHereInAform == string::npos)
-						{
-							mergedEnvVar->value = mergedEnvVar->value + " $<$<CONFIG:" + curConfig.name + ">:" + envVarToMerge.value + ">";
-
-						}
-						else
-						{
-							/* Welcome to the environment merge mess! there are only 2 types of generators our existing variable may be in.
-							 *  ether:
-							 * 1. the variable is in a $<CONFIG:...> generator (meaning we need to encapuslate this into an $<$<OR:,:> generator)
-							 * 2. the variable is already in an $<$<OR:,:>  generator and we simply need to add another option here.
-							 * Deriving this is a matter of counting the '>' brackets before variable we found.
-							 * Once done, we go through the obtuse substring logic that the std library has actually made fairly usable.
-							 */
-							size_t howManyLayer = 0,  charToSee = isInHereInAform  - 2;
-							while(mergedEnvVar->value[charToSee--] == '>')
-							  howManyLayer++;
-
-							string preTheValue = mergedEnvVar->value.substr(0, isInHereInAform);
-							if (howManyLayer == 1)
-							{
-							    size_t whereTheGeneratorStarts = preTheValue.find_last_of("$<")-1;
-							    string z_beginning = mergedEnvVar->value.substr(0,whereTheGeneratorStarts) , z_middle = "$<OR:$<CONFIG:" + curConfig.name + ">," ,
-								z_end =  mergedEnvVar->value.substr(whereTheGeneratorStarts);
-
-							    size_t whereToAddIt = z_end.find(envVarToMerge.value) -1;
-							    z_end = z_end.substr(0,whereToAddIt) + ">"  + z_end.substr(whereToAddIt);
-							    mergedEnvVar->value = z_beginning + z_middle + z_end;
-							}
-							else if (howManyLayer > 1)
-							{
-							    string z_begin = mergedEnvVar->value.substr(0,isInHereInAform-2), z_middle = ",$<CONFIG:" + curConfig.name + ">",
-								z_end = mergedEnvVar->value.substr(isInHereInAform-2);
-
-							    mergedEnvVar->value = z_begin + z_middle + z_end;
-							}
-							else
-							{
-								throw std::runtime_error("node has an invalid depth: " + envVarToMerge.value );
-							}
-						}
-					  }
-					break;
+					{
+						generatorMerge(mergedEnvVar->value, envVarToMerge.value, configuration_typeNames);
+						break;
+					}
 				  }
 			}
 
@@ -368,14 +371,17 @@ void generate(cdt::project& cdtproject, bool write_files)
 		/* evaluate the candidate config's IGNORE list */
 		for(cdt::configuration_t::excludes& fileToExclude : curConfig.exclude_entries)
 		{
-			for (cdt::configuration_t::build_file& checked_file: configToAdd.build_files)
-			  {
-			    if(checked_file.file == fileToExclude.sourcePath)
-			      {
-				//TODO: figure out your generator logic.
-				printf("%s does not match %s in config %s\n", checked_file.file.c_str(), fileToExclude.sourcePath.c_str(), curConfig.name.c_str());
-			      }
-			  }
+		    for (string& filepath : source_filpaths)
+		    {
+			size_t isInThisOne = filepath.find(fileToExclude.sourcePath);
+			if(isInThisOne != string::npos)
+			{
+				//TODO: Figure out a decent way to store filepaths
+				printf("%s does not match %s in config %s\n", filepath.c_str(), fileToExclude.sourcePath.c_str(), curConfig.name.c_str());
+				filepath = "$<$<NOT:$<CONFIG:" + curConfig.name + ">>:" + filepath + ">";
+//				generatorMerge(filepath, envVarToMerge.value, configuration_typeNames);
+			}
+		    }
 		}
 	}
 
@@ -417,6 +423,8 @@ void generate(cdt::project& cdtproject, bool write_files)
 				master << "add_library (" << currentConf.artifact << " SHARED";
 				break;
 		}
+
+#ifdef Sources_by_idiotic_map
 		for(const pair<string,vector<string>>& source_folder : sources)
 		{
 			for(const string& source : source_folder.second)
@@ -427,6 +435,11 @@ void generate(cdt::project& cdtproject, bool write_files)
 				    << source;
 			}
 		}
+#endif // Sources_by_idiotic_map
+		for (const string&  source : source_filpaths)
+		  {
+			master << "\n\t" << source;
+		  }
 		master << ")\n\n";
 
 		if(!currentConf.prebuild.empty() || !currentConf.postbuild.empty())
