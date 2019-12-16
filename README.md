@@ -1,4 +1,4 @@
-#cdt2cmake
+# cdt2cmake
 
 [![Actions Status](https://badgen.net/github/checks/lukechilds/dockerpi?icon=github&label=Build%20Status)](https://github.com/saterj/cdt2cmake/actions)
 
