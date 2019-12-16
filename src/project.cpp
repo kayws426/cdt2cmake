@@ -187,7 +187,7 @@ void generatorMerge(string& mergedEnvVar, const string& enVarToMerge, const vect
 		else if (prevConfigs.size() == 2)
 		{
 		    /* single generator, easy */
-		    mergedEnvVar =  "$<$<CONFIG:" + prevConfigs[0] + ">" + mergedEnvVar + ">";
+		    mergedEnvVar =  "$<$<CONFIG:" + prevConfigs[0] + ">:" + mergedEnvVar + ">";
 		}
 		else
 		  {
@@ -376,10 +376,13 @@ void generate(cdt::project& cdtproject, bool write_files)
 			size_t isInThisOne = filepath.find(fileToExclude.sourcePath);
 			if(isInThisOne != string::npos)
 			{
-				//TODO: Figure out a decent way to store filepaths
-				printf("%s does not match %s in config %s\n", filepath.c_str(), fileToExclude.sourcePath.c_str(), curConfig.name.c_str());
-				filepath = "$<$<NOT:$<CONFIG:" + curConfig.name + ">>:" + filepath + ">";
-//				generatorMerge(filepath, envVarToMerge.value, configuration_typeNames);
+				string singleNOTbeginner = "$<$<NOT:$<CONFIG:";
+				filepath = singleNOTbeginner + curConfig.name + ">>:" + filepath + ">";
+				size_t onlyHasOne = filepath.find(singleNOTbeginner);
+				if(onlyHasOne != string::npos)
+				{
+					printf("Hi");
+				}
 			}
 		    }
 		}
@@ -400,7 +403,18 @@ void generate(cdt::project& cdtproject, bool write_files)
 
 	master << "cmake_minimum_required (VERSION 3.5)\n\n";
 	master << "project (" << project_name << ")\n\n";
-	master << "\n";
+
+	master <<  "# Configuration types \n";
+	master <<  "SET(CMAKE_CONFIGURATION_TYPES \"";
+	string configlist;
+	for(const string& configName: configuration_typeNames)
+	    configlist = configlist + configName + ";";
+	master << configlist.substr(0,configlist.length()-1);
+	master << "\" CACHE STRING \"Configs\" FORCE)\n";
+	master << "IF(DEFINED CMAKE_BUILD_TYPE AND CMAKE_VERSION VERSION_GREATER \"2.8\")\n";
+	master << "\tSET_PROPERTY(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS  ${CMAKE_CONFIGURATION_TYPES})\n";
+	master << "ENDIF()\n\n";
+
 
 	for(pair<string, cdt::configuration_t> targetConfig: artifact_configurations)
 	{
@@ -424,22 +438,10 @@ void generate(cdt::project& cdtproject, bool write_files)
 				break;
 		}
 
-#ifdef Sources_by_idiotic_map
-		for(const pair<string,vector<string>>& source_folder : sources)
-		{
-			for(const string& source : source_folder.second)
-			{
-				master
-				    << "\n\t"
-				    << (source_folder.first.empty() ? string{} : source_folder.first + "/")
-				    << source;
-			}
-		}
-#endif // Sources_by_idiotic_map
 		for (const string&  source : source_filpaths)
-		  {
+		{
 			master << "\n\t" << source;
-		  }
+		}
 		master << ")\n\n";
 
 		if(!currentConf.prebuild.empty() || !currentConf.postbuild.empty())

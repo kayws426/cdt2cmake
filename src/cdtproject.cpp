@@ -345,7 +345,7 @@ configuration_t project::configuration(const std::string& cconfiguration_id)
 	conf.env_values.push_back( {"ProjName", conf.artifact });
 	for ( std::string& propsLines : project_vars)
 	  {
-	    size_t foundPROJ = propsLines.find(cconfiguration_id);
+	    size_t foundPROJ = propsLines.find(cconfiguration_id + "/");
 	    if (foundPROJ != std::string::npos)
 	      {
 		//TODO: change the CFG to CONFIG or whatever standard Cmake generators do.
