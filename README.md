@@ -1,6 +1,6 @@
 # cdt2cmake
 
-[![Actions Status](https://badgen.net/github/checks/lukechilds/dockerpi?icon=github&label=Build%20Status)](https://github.com/saterj/cdt2cmake/actions)
+[![Actions Status](https://badgen.net/github/checks/saterj/cdt2cmake?icon=github&label=Build%20Status)](https://github.com/saterj/cdt2cmake/actions)
 
 > Eclipse CDT to CMake converter
 
