@@ -98,7 +98,6 @@ void usage(const std::string& program_name)
 	std::cout << "Usage: " << program_name << " [OPTIONS]... /path/to/eclipse-cdt/project/...\n";
 	std::cout << "Converts CDT project file descriptions to CMakeLists.txt files.\n";
 	std::cout << "By default no changes are made to the project source path.\n\n";
-
 	std::cout << "  --generate              Generate the CMakeLists.txt files\n";
 	std::cout << "                          in their appropriate source locations.\n";
 	std::cout << "  --help                  display this help and exit\n";

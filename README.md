@@ -1,7 +1,8 @@
-cdt2cmake
-=========
+# cdt2cmake
 
-Eclipse CDT to CMake converter
+[![Actions Status](https://badgen.net/github/checks/saterj/cdt2cmake?icon=github&label=Build%20Status)](https://github.com/saterj/cdt2cmake/actions)
+
+> Eclipse CDT to CMake converter
 
 An ugly, awful, hackish utility written to liberate code from Eclipse CDT.
 
