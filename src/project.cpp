@@ -378,11 +378,12 @@ void generate(cdt::project& cdtproject, bool write_files)
 			{
 				string singleNOTbeginner = "$<$<NOT:$<CONFIG:";
 				filepath = singleNOTbeginner + curConfig.name + ">>:" + filepath + ">";
-				size_t onlyHasOne = filepath.find(singleNOTbeginner);
-				if(onlyHasOne != string::npos)
-				{
-					printf("Hi");
-				}
+//				size_t onlyHasOne = filepath.find(singleNOTbeginner);
+//				if(onlyHasOne != string::npos)
+//				{
+//				    filepath = filepath.substr(0,isInThisOne-1)
+//					filePath = "$<$<NOT:$<OR:$<CONFIG:" + filepath.substr(singleNOTbeginner.size());
+//				}
 			}
 		    }
 		}
