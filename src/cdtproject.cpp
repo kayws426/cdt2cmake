@@ -221,6 +221,8 @@ configuration_t project::configuration(const std::string& cconfiguration_id)
 					if(!listOptionValue->Attribute("value"))
 						continue;
 
+					fprintf(stderr, "value: %s\n", listOptionValue->Attribute("value"));
+
 					std::string value = listOptionValue->Attribute("value");
 					filterStrings(value, "\"");
 					list.push_back(value);
@@ -234,10 +236,16 @@ configuration_t project::configuration(const std::string& cconfiguration_id)
 					std::string superClass;
 					option->QueryStringAttribute("superClass", &superClass);
 
+					fprintf(stderr, "option: %s\n", superClass.c_str());
+
 					if(superClass.find("compiler.option.include.paths") != std::string::npos)
 					  {
 						extract_option_list(option, compiler.includes);
 					  }
+					else if(superClass.find("INCLUDE_PATH") != std::string::npos)
+						extract_option_list(option, compiler.includes);
+					else if(superClass.find("DEFINE") != std::string::npos)
+						option->QueryStringAttribute("value", &compiler.options);
 					else if(superClass.find("compiler.option.other.other") != std::string::npos)
 					  {
 						option->QueryStringAttribute("value", &compiler.options);
@@ -253,8 +261,14 @@ configuration_t project::configuration(const std::string& cconfiguration_id)
 					std::string superClass;
 					option->QueryStringAttribute("superClass", &superClass);
 
+					fprintf(stderr, "option: %s\n", superClass.c_str());
+
 					if(superClass.find("link.option.libs") != std::string::npos)
 						extract_option_list(option, linker.libs);
+					else if(superClass.find("LIBRARY") != std::string::npos)
+						extract_option_list(option, linker.libs);
+					else if(superClass.find("SEARCH_PATH") != std::string::npos)
+						extract_option_list(option, linker.lib_paths);
 					else if(superClass.find("link.option.paths") != std::string::npos)
 						extract_option_list(option, linker.lib_paths);
 					else if(superClass.find("link.option.flags") != std::string::npos)
@@ -277,6 +291,12 @@ configuration_t project::configuration(const std::string& cconfiguration_id)
 					extract_linker_options(tool, bf.cpp.linker);
 
 				else if(superClass.find("c.linker") != std::string::npos)
+					extract_linker_options(tool, bf.c.linker);
+
+				else if(superClass.find("compiler") != std::string::npos)
+					extract_compiler_options(tool, bf.c.compiler);
+
+				else if(superClass.find("linker") != std::string::npos)
 					extract_linker_options(tool, bf.c.linker);
 			}
 		}
@@ -336,13 +356,16 @@ configuration_t project::configuration(const std::string& cconfiguration_id)
 		}
 		else
 		{
-			throw std::runtime_error("Unknown build node: " + build_instr->ValueStr());
+			// throw std::runtime_error("Unknown build node: " + build_instr->ValueStr());
+			std::cerr << "Unknown build node: " + build_instr->ValueStr() << std::endl;
 		}
 	}
 
 	/* Add the project variables to the data structure */
 	conf.env_values.push_back( {"WorkspaceDirPath", "${CMAKE_CURRENT_SOURCE_DIR}"});
 	conf.env_values.push_back( {"ProjName", conf.artifact });
+	conf.env_values.push_back( {"PROJECT_ROOT", "${CMAKE_CURRENT_SOURCE_DIR}"});
+	conf.env_values.push_back( {"PROJECT_LOC", "${CMAKE_CURRENT_SOURCE_DIR}"});
 	for ( std::string& propsLines : project_vars)
 	  {
 	    size_t foundPROJ = propsLines.find(cconfiguration_id + "/");

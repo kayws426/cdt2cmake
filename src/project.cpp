@@ -61,7 +61,7 @@ void merge(const cdt::configuration_t::build_folder::compiler_t& source, cdt::co
 			inc = inc.substr(0, inc.size() - 2);
 			inc = "${CMAKE_SOURCE_DIR}/" + inc;
 
-			if(inc[inc.size()-1] != '/')
+			if(inc[inc.size()-1] != '/' && inc[inc.size()-1] != '"')
 				inc += '/';
 		}
 		else if(inc.find("../../") == 0)
@@ -69,12 +69,12 @@ void merge(const cdt::configuration_t::build_folder::compiler_t& source, cdt::co
 			inc = inc.substr(6);
 			inc = "${CMAKE_SOURCE_DIR}/" + inc;
 
-			if(inc[inc.size()-1] != '/')
+			if(inc[inc.size()-1] != '/' && inc[inc.size()-1] != '"')
 				inc += '/';
 		}
 		else
 		{
-			if(inc[inc.size()-1] != '/')
+			if(inc[inc.size()-1] != '/' && inc[inc.size()-1] != '"')
 				inc += '/';
 		}
 
@@ -461,8 +461,9 @@ void generate(cdt::project& cdtproject, bool write_files)
 				{
 					if(!bf.cpp.compiler.includes.empty() || !bf.c.compiler.includes.empty())
 					{
-						//master << "set_property (TARGET " << c.artifact << " PROPERTY INCLUDE_DIRECTORIES";
-						master << "INCLUDE_DIRECTORIES(";
+						master << "set_property (TARGET " << currentConf.artifact << " PROPERTY INCLUDE_DIRECTORIES";
+						// master << "INCLUDE_DIRECTORIES(";
+						// master << "target_include_directories (" << currentConf.artifact << " PUBLIC";
 						if(lang_cxx)
 						{
 							for(string& inc : bf.cpp.compiler.includes)

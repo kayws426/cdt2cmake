@@ -37,7 +37,8 @@ configuration_t::Type resolve_artifact_type(const std::string& artifact_type)
 	else if(artifact_type == "org.eclipse.cdt.build.core.buildArtefactType.sharedLib")
 		return configuration_t::Type::SharedLibrary;
 	else
-		throw std::runtime_error("Unknown artifact type: " + artifact_type);
+		return configuration_t::Type::Executable;
+		// throw std::runtime_error("Unknown artifact type: " + artifact_type);
 }
 
 std::ostream& operator<<(std::ostream& os, const configuration_t& conf)
